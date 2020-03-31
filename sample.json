@@ -1,0 +1,36 @@
+{
+  "random" : false,
+  "authPass" : null,
+  "useOnlinePac" : false,
+  "TTL" : 0,
+  "global" : false,
+  "reconnectTimes" : 3,
+  "index" : 0,
+  "proxyType" : 0,
+  "proxyHost" : null,
+  "authUser" : null,
+  "proxyAuthPass" : null,
+  "isDefault" : false,
+  "pacUrl" : null,
+  "configs" : [
+    {
+      "enable" : true,
+      "password" : "pwd",
+      "method" : "chacha20-ietf",
+      "remarks" : "endpoint remark",
+      "server" : "example.com",
+      "obfs" : "plain",
+      "protocol" : "origin",
+      "server_port" : 2020,
+      "remarks_base64" : "6aaZ5rivNS1oazkzLemmmea4r1BDQ1c="
+    }
+  ],
+  "proxyPort" : 0,
+  "randomAlgorithm" : 0,
+  "proxyEnable" : false,
+  "enabled" : true,
+  "autoban" : false,
+  "proxyAuthUser" : null,
+  "shareOverLan" : false,
+  "localPort" : 1080
+}
