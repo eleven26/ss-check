@@ -1,0 +1,13 @@
+{
+  "protocol_param": "",
+  "method": "none",
+  "protocol": "origin",
+  "server": "hk1.kingss.me1",
+  "password": "ytVO67cgUQ1f",
+  "local_address": "0.0.0.0",
+  "server_port": 28574,
+  "timeout": 60,
+  "local_port": 56321,
+  "obfs_param": "",
+  "obfs": "plain"
+}
