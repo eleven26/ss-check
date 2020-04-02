@@ -43,7 +43,7 @@ type SSLocalConfig struct {
 }
 
 // Convert Config to SSLocalConfig.
-func ToSSLocalConfig(config Config) SSLocalConfig {
+func ToSSLocalConfig(config Config, socksPort int) SSLocalConfig {
 	return SSLocalConfig{
 		ProtocolParam: config.ProtocolParam,
 		Method:        config.Method,
@@ -53,18 +53,18 @@ func ToSSLocalConfig(config Config) SSLocalConfig {
 		LocalAddress:  "0.0.0.0",
 		ServerPort:    config.ServerPort,
 		Timeout:       60,
-		LocalPort:     56321,
+		LocalPort:     socksPort,
 		Obfs:          config.Obfs,
 		ObfsParam:     config.ObfsParam,
 	}
 }
 
 // Use temporary file to save privoxy Config file.
-func PrivoxyConfigPath() string {
-	httpProxyPort := "58321"
-	socksListenPort := "56321"
+func PrivoxyConfigPath(httpProxyPort, socksListenPort int) string {
+	//httpProxyPort := "58321"
+	//socksListenPort := "56321"
 
-	config := `listen-address 0.0.0.0:%s
+	config := `listen-address 0.0.0.0:%d
 toggle  1
 enable-remote-toggle 1
 enable-remote-http-toggle 1
@@ -78,7 +78,7 @@ split-large-forms 0
 keep-alive-timeout 5
 socket-timeout 60
 
-forward-socks5 / 0.0.0.0:%s .
+forward-socks5 / 0.0.0.0:%d .
 forward         192.168.*.*/     .
 forward         10.*.*.*/        .
 forward         127.*.*.*/       .`

@@ -8,9 +8,6 @@ import (
 	"time"
 )
 
-var home = HomeDir()
-var tested = 0.0
-
 func checkEnvironment() {
 	path := path()
 	if !FileExists(path) {
@@ -34,59 +31,62 @@ func prepare() {
 			}
 		}
 
-		os.Link(path()+binary, path()+binaryTmp)
+		err := os.Link(path()+binary, path()+binaryTmp)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
 func path() string {
-	return fmt.Sprintf("%s/Library/Application Support/ShadowsocksX-NG/", home)
+	return fmt.Sprintf("%s/Library/Application Support/ShadowsocksX-NG/", HomeDir())
 }
 
 func main() {
 	checkEnvironment()
 	prepare()
+	KillOldProcess()
+	defer func() {
+		err := recover()
+		KillOldProcess()
+		if err != nil {
+			panic(err)
+		}
+	}()
 
-	var flags struct {
-		ConfigPath string
-		Kill       bool
-	}
-
-	// Get Config file path
-	flag.StringVar(&flags.ConfigPath, "c", "", "ss-check json Config file path")
-	flag.BoolVar(&flags.Kill, "k", false, "ss-check -k")
+	var configPath string
+	flag.StringVar(&configPath, "c", "", "ss-check -c /path/to/config.json")
 	flag.Parse()
-	if flags.ConfigPath == "" {
-		fmt.Println("Usage: ss-check -c /path/to/Config.json")
+	if configPath == "" {
+		fmt.Println("Usage: ss-check -c /path/to/config.json")
 		os.Exit(-1)
 	}
 
-	var runner = NewRunner(flags.ConfigPath)
+	var runner = NewRunner(configPath)
 	defer runner.Report()
 	defer runner.Clean()
 
-	if flags.Kill {
-		KillOldProcess()
-	}
-
-	go runner.StartPrivoxy()
-	time.Sleep(time.Second * 1) // Waiting for privoxy started
-
-	// Write Config to tmp file
 	for _, tester := range runner.Testers() {
-		// 1. Start new ss-local process with different Config
-		// 2. Test tunnel to google
-		tester.Wg.Add(1)
-		go tester.StartSSLocal()
-		tester.Wg.Wait()
-		time.Sleep(time.Millisecond * 10)
+		go func(tester *Tester) {
+			// 1. Start new ss-local process with different Config
+			// 2. Test tunnel to google
+			tester.Wg.Add(2)
+			go tester.StartPrivoxy()
+			go tester.StartSSLocal()
+			tester.Wg.Wait()
+			time.Sleep(time.Millisecond * 10)
 
-		// Wait test process finished.
-		ch := make(chan bool)
-		tester.TestConnection(ch, runner)
-		<-ch
+			// Wait test process finished.
+			tester.TestConnection(runner)
+			tester.ExitSSLocal()
+			tester.ExitPrivoxy()
 
-		tester.ExitSSLocal()
-		time.Sleep(time.Millisecond * 10)
+			runner.Wg.Done()
+		}(tester)
 	}
-	time.Sleep(time.Second)
+
+	runner.Wg.Wait()
 }
+
+// 1. for 循环里面 go func(xx Type) {}(yy) go 起新的协程需要定义形参，防止后续的变量覆盖掉前面的
+// 2. fmt.Sprintf("%s", 133)，这种写法错误，不会转换为 "133"
