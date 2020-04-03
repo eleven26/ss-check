@@ -1,11 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"io/ioutil"
-	"log"
-)
-
 // Parse Config file export from ShadowsocksX-NG
 type ServerConfigs struct {
 	Configs   []Config `json:"configs"`
@@ -57,42 +51,4 @@ func ToSSLocalConfig(config Config, socksPort int) SSLocalConfig {
 		Obfs:          config.Obfs,
 		ObfsParam:     config.ObfsParam,
 	}
-}
-
-// Use temporary file to save privoxy Config file.
-func PrivoxyConfigPath(httpProxyPort, socksListenPort int) string {
-	//httpProxyPort := "58321"
-	//socksListenPort := "56321"
-
-	config := `listen-address 0.0.0.0:%d
-toggle  1
-enable-remote-toggle 1
-enable-remote-http-toggle 1
-enable-edit-actions 0
-enforce-blocks 0
-buffer-limit 4096
-forwarded-connect-retries  0
-accept-intercepted-requests 0
-allow-cgi-request-crunching 0
-split-large-forms 0
-keep-alive-timeout 5
-socket-timeout 60
-
-forward-socks5 / 0.0.0.0:%d .
-forward         192.168.*.*/     .
-forward         10.*.*.*/        .
-forward         127.*.*.*/       .`
-	config = fmt.Sprintf(config, httpProxyPort, socksListenPort)
-
-	tmpFile, err := ioutil.TempFile("", "privoxy.Config")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = ioutil.WriteFile(tmpFile.Name(), []byte(config), 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return tmpFile.Name()
 }

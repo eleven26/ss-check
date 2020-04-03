@@ -3,31 +3,34 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"net/url"
 	"os"
-	"time"
 )
 
+var binaries = []string{"ss-local", "privoxy"}
+
+// Check if environment support.
 func checkEnvironment() {
 	path := path()
 	if !FileExists(path) {
 		panic(fmt.Sprintf("%s not exists. Exiting...", path))
 	}
 
-	for _, binary := range []string{"ss-local", "privoxy"} {
+	for _, binary := range binaries {
 		if !FileExists(path + binary) {
 			panic(fmt.Sprintf("%s not exists. Exiting...", path+binary))
 		}
 	}
 }
 
-func prepare() {
-	for _, binary := range []string{"ss-local", "privoxy"} {
+// Copy binary file, so we can kill these test processes by a new name.
+func copyBinaries() {
+	for _, binary := range binaries {
 		binaryTmp := binary + "-tmp"
 		if FileExists(path() + binaryTmp) {
 			err := os.Remove(path() + binaryTmp)
 			if err != nil {
-				log.Fatal(err)
+				panic(err)
 			}
 		}
 
@@ -38,50 +41,70 @@ func prepare() {
 	}
 }
 
+func prepare() {
+	checkEnvironment()
+	copyBinaries()
+	KillOldProcess()
+}
+
+func clean() {
+	KillOldProcess()
+}
+
 func path() string {
 	return fmt.Sprintf("%s/Library/Application Support/ShadowsocksX-NG/", HomeDir())
 }
 
+func IsUrl(str string) bool {
+	u, err := url.Parse(str)
+	return err == nil && u.Scheme != "" && u.Host != ""
+}
+
 func main() {
-	checkEnvironment()
 	prepare()
-	KillOldProcess()
-	defer func() {
-		err := recover()
-		KillOldProcess()
-		if err != nil {
-			panic(err)
-		}
-	}()
+	defer clean()
 
 	var configPath string
+	var u string
 	flag.StringVar(&configPath, "c", "", "ss-check -c /path/to/config.json")
+	flag.StringVar(&u, "u", "", "ss-check -u www.google.com(only domain)")
 	flag.Parse()
 	if configPath == "" {
-		fmt.Println("Usage: ss-check -c /path/to/config.json")
+		fmt.Println("Usage: ss-check -c /path/to/config.json <-u www.google.com(only domain)>")
 		os.Exit(-1)
+	}
+	if u != "" {
+		if !IsUrl(u) {
+			panic(fmt.Sprintf("%s is not a valid URL.\n", u))
+		}
+	} else {
+		u = "www.google.com"
 	}
 
 	var runner = NewRunner(configPath)
 	defer runner.Report()
 	defer runner.Clean()
 
+	// Maximum running processes num is 5 * 2 (privoxy + ss-local)
+	throttle := make(chan int, 5)
+
 	for _, tester := range runner.Testers() {
 		go func(tester *Tester) {
-			// 1. Start new ss-local process with different Config
-			// 2. Test tunnel to google
+			throttle<-1
+			defer func() {
+				tester.Exit()
+				runner.Wg.Done()
+				<-throttle
+			}()
+
+			// 1. Start new privoxy and ss-local process with different config
+			// 2. Test http tunnel to google
 			tester.Wg.Add(2)
 			go tester.StartPrivoxy()
 			go tester.StartSSLocal()
 			tester.Wg.Wait()
-			time.Sleep(time.Millisecond * 10)
 
-			// Wait test process finished.
-			tester.TestConnection(runner)
-			tester.ExitSSLocal()
-			tester.ExitPrivoxy()
-
-			runner.Wg.Done()
+			tester.TestConnection(runner, u)
 		}(tester)
 	}
 

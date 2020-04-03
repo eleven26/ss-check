@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"os/user"
@@ -23,12 +22,12 @@ func FileExists(name string) bool {
 func CopyFile(src, dst string) {
 	input, err := ioutil.ReadFile(src)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	err = ioutil.WriteFile(dst, input, 0755)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
 
@@ -45,7 +44,7 @@ func KillOldProcess() {
 		cmd := exec.Command("/bin/sh", "-c", command)
 		_, err := cmd.Output()
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 	}
 }

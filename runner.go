@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"sort"
 	"sync"
@@ -48,14 +47,17 @@ func NewRunner(configPath string) *Runner {
 	return runner
 }
 
+// Tester count
 func (r *Runner) Len() int {
 	return len(r.testers)
 }
 
+// Swap tester
 func (r *Runner) Swap(i, j int) {
 	r.testers[i], r.testers[j] = r.testers[j], r.testers[i]
 }
 
+// Compare tester for ordering.
 func (r *Runner) Less(i, j int) bool {
 	var b2i = map[bool]int8{false: 0, true: 1}
 
@@ -73,17 +75,18 @@ func (r *Runner) parseConfigFile() {
 	// Read Config file
 	content, err := ioutil.ReadFile(r.configPath)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	err = json.Unmarshal(content, &r.serverConfigs)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	r.Total = float64(len(r.serverConfigs.Configs))
 }
 
+// Create testers by shadowsocks configs.
 func (r *Runner) createTesters() {
 	r.testers = make([]*Tester, r.Len())
 	for _, config := range r.serverConfigs.Configs {
@@ -103,20 +106,11 @@ func (r *Runner) Report() {
 
 	for _, tester := range r.testers {
 		tester.Report()
-		tester.Exit()
 	}
 }
 
-// Remove temporary files. Stop testing processes.
-func (r *Runner) Clean() {
-	// Delete temporary privoxy config file.
-	if FileExists(r.privoxyConfigPath) {
-		err := os.Remove(r.privoxyConfigPath)
-		if err != nil {
-			fmt.Println(fmt.Sprintf("Remove %s fails: %+v\n", r.privoxyConfigPath, err))
-		}
-	}
-
+// Remove temporary binary files.
+func (r *Runner) removeTmpBinaries()  {
 	// Delete temporary ss-local-tmp, privoxy-tmp files/
 	for _, binary := range []string{"ss-local-tmp", "privoxy-tmp"} {
 		if FileExists(workingDir + binary) {
@@ -125,6 +119,17 @@ func (r *Runner) Clean() {
 				fmt.Println(fmt.Sprintf("Remove %s fails: %+v", workingDir+"/"+binary, err))
 			}
 		}
+	}
+}
+
+// Remove temporary files. Stop testing processes.
+func (r *Runner) Clean() {
+	r.removeTmpBinaries()
+
+	// Delete temporary files.
+	for _, tester := range r.testers {
+		tester.Clean()
+		tester.Exit()
 	}
 }
 
