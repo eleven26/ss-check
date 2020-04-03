@@ -20,6 +20,8 @@
 go get github.com/eleven26/ss-check 
 ```
 
+> 记得把 `$GOPATH/bin` 加到你的 `$PATH` 环境变量中。
+
 或
 
 ### Curl

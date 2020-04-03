@@ -22,6 +22,8 @@ Sometimes shadowsocks server can ping, but `ssserver` may not working at all, fo
 go get github.com/eleven26/ss-check 
 ```
 
+> Remember add `$GOPATH/bin` to your `$PATH` environment variable.
+
 Or
 
 ### Curl
