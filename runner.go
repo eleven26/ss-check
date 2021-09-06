@@ -17,7 +17,7 @@ var workingDir = fmt.Sprintf("%s/Library/Application Support/ShadowsocksX-NG/", 
 var httpPort = 58321
 var socksPort = 56321
 
-// Implement Sort interface.
+// Runner Implement Sort interface.
 type Runner struct {
 	Total  float64
 	Tested float64
@@ -29,7 +29,7 @@ type Runner struct {
 	serverConfigs     ServerConfigs
 }
 
-// Create an new runner.
+// NewRunner Create a new runner.
 func NewRunner(configPath string) *Runner {
 	if !FileExists(configPath) {
 		panic(fmt.Sprintf("File '%s' not exists.\n", configPath))
@@ -47,7 +47,7 @@ func NewRunner(configPath string) *Runner {
 	return runner
 }
 
-// Tester count
+// Len Tester count
 func (r *Runner) Len() int {
 	return len(r.testers)
 }
@@ -57,7 +57,7 @@ func (r *Runner) Swap(i, j int) {
 	r.testers[i], r.testers[j] = r.testers[j], r.testers[i]
 }
 
-// Compare tester for ordering.
+// Less Compare tester for ordering.
 func (r *Runner) Less(i, j int) bool {
 	var b2i = map[bool]int8{false: 0, true: 1}
 
@@ -99,7 +99,7 @@ func (r *Runner) createTesters() {
 	}
 }
 
-// Generate test report.
+// Report Generate test report.
 func (r *Runner) Report() {
 	// Sort test results
 	sort.Sort(r)
@@ -110,7 +110,7 @@ func (r *Runner) Report() {
 }
 
 // Remove temporary binary files.
-func (r *Runner) removeTmpBinaries()  {
+func (r *Runner) removeTmpBinaries() {
 	// Delete temporary ss-local-tmp, privoxy-tmp files/
 	for _, binary := range []string{"ss-local-tmp", "privoxy-tmp"} {
 		if FileExists(workingDir + binary) {
@@ -122,7 +122,7 @@ func (r *Runner) removeTmpBinaries()  {
 	}
 }
 
-// Remove temporary files. Stop testing processes.
+// Clean Remove temporary files. Stop testing processes.
 func (r *Runner) Clean() {
 	r.removeTmpBinaries()
 
@@ -133,7 +133,7 @@ func (r *Runner) Clean() {
 	}
 }
 
-// Get the underlying testers.
+// Testers Get the underlying testers.
 func (r *Runner) Testers() []*Tester {
 	return r.testers
 }

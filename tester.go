@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// Attributes of Tester:
+// Tester Attributes of Tester:
 // 		Wg: WaitGroup for manipulate privoxy and ss-local process.
 // 		IsUsage: If Config is Usable
 // 		Config:  Shadowsocks server config
@@ -37,7 +37,7 @@ type Tester struct {
 	socksPort         int
 }
 
-// Create a new tester for testing config.
+// NewTester Create a new tester for testing config.
 func NewTester(httpPort, socksPort int) *Tester {
 	return &Tester{
 		Wg:        &sync.WaitGroup{},
@@ -55,7 +55,7 @@ func (t *Tester) usable() string {
 	}
 }
 
-// Exit privoxy and ss-local processes.
+// Exit Exit privoxy and ss-local processes.
 func (t *Tester) Exit() {
 	t.exitSSLocal()
 	t.exitPrivoxy()
@@ -178,7 +178,7 @@ forward         127.*.*.*/       .`
 	return tmpFile.Name()
 }
 
-// Check if connection can access google.com.
+// TestConnection Check if connection can access google.com.
 func (t *Tester) TestConnection(runner *Runner, u string) {
 	cmd := exec.Command("curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "-m", "1", fmt.Sprintf("http://%s", u))
 	//cmd := exec.Command("curl", "-m", "2", "http://www.google.com")
@@ -200,7 +200,7 @@ func (t *Tester) TestConnection(runner *Runner, u string) {
 	}
 }
 
-// Start ss-local process for connecting to shadowsocks server.
+// StartSSLocal Start ss-local process for connecting to shadowsocks server.
 func (t *Tester) StartSSLocal() {
 	ssLocalBinary := path() + "ss-local-tmp"
 	cmd := exec.Command(ssLocalBinary, "-c", t.tmpSSLocalConfigPath())
@@ -219,7 +219,7 @@ func (t *Tester) StartSSLocal() {
 	}
 }
 
-// Start privoxy process to accept http proxy requests.
+// StartPrivoxy Start privoxy process to accept http proxy requests.
 func (t *Tester) StartPrivoxy() {
 	privoxyBinary := path() + "privoxy-tmp"
 	cmd := exec.Command(privoxyBinary, t.tmpPrivoxyConfigPath())
@@ -235,7 +235,7 @@ func (t *Tester) StartPrivoxy() {
 	}
 }
 
-// Example: ✔ example.com(remark), delay: 355ms
+// Report Example: ✔ example.com(remark), delay: 355ms
 func (t *Tester) Report() {
 	fmt.Printf("%s %s, delay: %dms\n", strings.Trim(t.usable(), " "), t.server(), t.Delay)
 }

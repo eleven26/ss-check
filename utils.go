@@ -8,7 +8,7 @@ import (
 	"os/user"
 )
 
-// Check if a file exists.
+// FileExists Check if a file exists.
 func FileExists(name string) bool {
 	if _, err := os.Stat(name); err != nil {
 		if os.IsNotExist(err) {
@@ -18,7 +18,7 @@ func FileExists(name string) bool {
 	return true
 }
 
-// Copy file easily.
+// CopyFile Copy file easily.
 func CopyFile(src, dst string) {
 	input, err := ioutil.ReadFile(src)
 	if err != nil {
@@ -31,13 +31,13 @@ func CopyFile(src, dst string) {
 	}
 }
 
-// Get current user home directory.
+// HomeDir Get current user home directory.
 func HomeDir() string {
 	var usr, _ = user.Current()
 	return usr.HomeDir
 }
 
-// Kill old runner processes.
+// KillOldProcess Kill old runner processes.
 func KillOldProcess() {
 	for _, binary := range []string{"ss-local-tmp", "privoxy-tmp"} {
 		command := fmt.Sprintf("ps aux | grep %s | grep -v grep | awk '{print $2}' | xargs kill -9", binary)

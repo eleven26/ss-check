@@ -1,6 +1,6 @@
 package main
 
-// Parse Config file export from ShadowsocksX-NG
+// ServerConfigs Parse Config file export from ShadowsocksX-NG
 type ServerConfigs struct {
 	Configs   []Config `json:"configs"`
 	LocalPort int      `json:"local_port"`
@@ -21,7 +21,7 @@ type Config struct {
 	ObfsParam     string `json:"obfsparam"`
 }
 
-// Config file content for ss-local command.
+// SSLocalConfig Config file content for ss-local command.
 type SSLocalConfig struct {
 	ProtocolParam string `json:"protocol_param"`
 	Method        string `json:"method"`
@@ -36,7 +36,7 @@ type SSLocalConfig struct {
 	ObfsParam     string `json:"obfs_param"`
 }
 
-// Convert Config to SSLocalConfig.
+// ToSSLocalConfig Convert Config to SSLocalConfig.
 func ToSSLocalConfig(config Config, socksPort int) SSLocalConfig {
 	return SSLocalConfig{
 		ProtocolParam: config.ProtocolParam,
