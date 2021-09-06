@@ -1,6 +1,6 @@
 # ss-check
 
-A command line tool for checking shadowsocks's usability.
+A command line tool to check the usability of shadowsocks.
 
 Sometimes shadowsocks server can ping, but `ssserver` may not working at all, for this situation, we can use `ss-check` to check which config is working(By testing `curl http://www.google.com`).
 

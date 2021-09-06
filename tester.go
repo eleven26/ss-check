@@ -24,10 +24,11 @@ import (
 // 		httpPort:  Local http proxy port for privoxy
 //      socksPort: Port for ss-local listening.
 type Tester struct {
-	Wg       *sync.WaitGroup
-	IsUsable bool
-	Config   Config
-	Delay    int64
+	Wg        *sync.WaitGroup
+	IsUsable  bool
+	IsTimeout bool
+	Config    Config
+	Delay     int64
 
 	SSLocalPid        int
 	PrivoxyPid        int
@@ -186,7 +187,7 @@ func (t *Tester) TestConnection(runner *Runner, u string) {
 	// -o <path>:redirect output
 	// -w %{http_code}: output the http status code
 	// -m <seconds>: timeout
-	cmd := exec.Command("curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "-m", "5", fmt.Sprintf("http://%s", u))
+	cmd := exec.Command("curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "-m", "10", fmt.Sprintf("http://%s", u))
 	//cmd := exec.Command("curl", "-m", "2", "http://www.google.com")
 
 	cmd.Env = os.Environ()
@@ -195,14 +196,15 @@ func (t *Tester) TestConnection(runner *Runner, u string) {
 	startAt := time.Now()
 	out, err := cmd.Output()
 	if err != nil {
-		fmt.Printf("Failed to execute curl command: %v, status code: %v\n", err, string(out))
+		fmt.Printf("Failed to execute curl command: %s, status code: %v\n", err.Error(), string(out))
 	}
 	endAt := time.Now()
 	t.Delay = endAt.Sub(startAt).Milliseconds()
 
 	runner.Tested = runner.Tested + 1
 	// 500 is basically a privoxy proxy error.
-	t.IsUsable = string(out) != "500"
+	t.IsUsable = string(out) != "500" && string(out) != "000"
+	t.IsTimeout = err != nil && strings.Contains(err.Error(), "28") && string(out) == "000"
 
 	fmt.Println(t.usable(), t.server(), t.elapsed(), fmt.Sprintf("%.2f%% (%d/%d)", runner.Tested*100.0/runner.Total, int64(runner.Tested), int64(runner.Total)))
 }
@@ -238,5 +240,9 @@ func (t *Tester) StartPrivoxy() {
 
 // Report Example: ✔ example.com(remark), delay: 355ms
 func (t *Tester) Report() {
-	fmt.Printf("%s %s, delay: %dms\n", strings.Trim(t.usable(), " "), t.server(), t.Delay)
+	fmt.Printf("%s %s, delay: %dms", strings.Trim(t.usable(), " "), t.server(), t.Delay)
+	if t.IsTimeout {
+		fmt.Printf(" (timeout)")
+	}
+	fmt.Println()
 }
