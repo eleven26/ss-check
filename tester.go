@@ -180,24 +180,31 @@ forward         127.*.*.*/       .`
 
 // TestConnection Check if connection can access google.com.
 func (t *Tester) TestConnection(runner *Runner, u string) {
-	cmd := exec.Command("curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "-m", "1", fmt.Sprintf("http://%s", u))
+	// Wait for privoxy to be ready
+	time.Sleep(time.Second * 1)
+
+	// -o <path>:redirect output
+	// -w %{http_code}: output the http status code
+	// -m <seconds>: timeout
+	cmd := exec.Command("curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "-m", "5", fmt.Sprintf("http://%s", u))
 	//cmd := exec.Command("curl", "-m", "2", "http://www.google.com")
+
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, fmt.Sprintf("http_proxy=http://127.0.0.1:%d", t.httpPort))
+
 	startAt := time.Now()
 	out, err := cmd.Output()
+	if err != nil {
+		fmt.Printf("Failed to execute curl command: %v, status code: %v\n", err, string(out))
+	}
 	endAt := time.Now()
 	t.Delay = endAt.Sub(startAt).Milliseconds()
+
 	runner.Tested = runner.Tested + 1
-	if err != nil {
-		//log.Printf("TestConnection output with erro r: %v", err)
-	}
-	// Privoxy proxy error
-	t.IsUsable = string(out) == "200"
+	// 500 is basically a privoxy proxy error.
+	t.IsUsable = string(out) != "500"
+
 	fmt.Println(t.usable(), t.server(), t.elapsed(), fmt.Sprintf("%.2f%% (%d/%d)", runner.Tested*100.0/runner.Total, int64(runner.Tested), int64(runner.Total)))
-	if err != nil {
-		//log.Printf("TestConnection Command finished with error: %v", err)
-	}
 }
 
 // StartSSLocal Start ss-local process for connecting to shadowsocks server.
@@ -213,10 +220,7 @@ func (t *Tester) StartSSLocal() {
 	}
 	t.SSLocalPid = cmd.Process.Pid
 	t.Wg.Done()
-	err = cmd.Wait()
-	if err != nil {
-		//log.Printf("StartSSLocal Command finished with error: %v\n", err)
-	}
+	_ = cmd.Wait()
 }
 
 // StartPrivoxy Start privoxy process to accept http proxy requests.
@@ -229,10 +233,7 @@ func (t *Tester) StartPrivoxy() {
 		panic(err)
 	}
 	t.Wg.Done()
-	err = cmd.Wait()
-	if err != nil {
-		//fmt.Printf("startPrivoxy Command finished with error: %v", err)
-	}
+	_ = cmd.Wait()
 }
 
 // Report Example: ✔ example.com(remark), delay: 355ms
