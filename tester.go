@@ -14,7 +14,7 @@ import (
 
 // Tester Attributes of Tester:
 // 		Wg: WaitGroup for manipulate privoxy and ss-local process.
-// 		IsUsage: If Config is Usable
+// 		IsUsable: If Config is Usable
 // 		Config:  Shadowsocks server config
 //		Delay:   Delay of accessing http://www.google.com
 //		SSLocalPid: Record process id of ss-local.
